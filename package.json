@@ -1,0 +1,13 @@
+{
+  "name": "apple-ads-v5-scan",
+  "version": "0.1.0",
+  "description": "Find Apple Ads Campaign Management API v5 calls in your code before it shuts down on 2027-01-26, and see what each becomes in the Apple Ads Platform API.",
+  "type": "module",
+  "bin": { "apple-ads-v5-scan": "scan.mjs" },
+  "files": ["scan.mjs"],
+  "scripts": { "test": "node --test test/" },
+  "engines": { "node": ">=18" },
+  "keywords": ["apple-ads", "apple-search-ads", "search-ads-api", "apple-ads-platform-api", "migration"],
+  "homepage": "https://github.com/y7technology/apple-ads-api-v5-migration",
+  "license": "MIT"
+}

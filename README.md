@@ -10,11 +10,30 @@ Full write-up: **[Apple Ads API v5 shutdown: what changes and how to move](https
 
 ## Contents
 
+- [Find v5 calls in your code](#find-v5-calls-in-your-code)
 - [What does not change](#what-does-not-change)
 - [What changes](#what-changes)
 - [Where the live API disagreed with the documentation](#where-the-live-api-disagreed-with-the-documentation)
 - [A migration plan that does not risk spend](#a-migration-plan-that-does-not-risk-spend)
 - [Checklist](#checklist)
+
+## Find v5 calls in your code
+
+`scan.mjs` walks a codebase and lists every v5 construct it recognises — the v5 base URL, `orgId` context, `GET` lists with `limit`/`offset`, `/reports/campaigns`, `…/bulk` keyword writes, `dailyBudgetAmount`, `defaultBidAmount`, `adamId`, `messageCode` and more — with what each becomes in the Platform API. Node 18+, no dependencies, nothing leaves your machine.
+
+```sh
+npx github:y7technology/apple-ads-api-v5-migration path/to/your/code
+```
+
+```
+src/asa/client.py
+  3:17  base-url  api.searchads.apple.com/api/v5
+      → Base URL becomes https://api.ads.apple.com/v1. v5 stops answering on 2027-01-26.
+  17:31  campaign-report  /reports/campaigns
+      → POST /reports/apps/campaigns/query. Filter on `id` (string), not `campaignId` (400). …
+```
+
+It exits 1 when it finds v5 usage, so it can gate CI until the move is done. `--json` prints machine-readable findings. Field names that are common outside Apple Ads (`adamId`, `servingStatus`, `granularity`) are only reported in files that also call the Search Ads API. It reads source only: also check cron jobs, BI connectors and vendors.
 
 ## What does not change
 
@@ -56,7 +75,7 @@ Read-only calls against our own account, October 2026. Each would have produced 
 
 ## A migration plan that does not risk spend
 
-1. Inventory every caller of `api.searchads.apple.com` — scripts, scheduled jobs, BI connectors, vendors. Ask vendors for their cut-over date in writing.
+1. Inventory every caller of `api.searchads.apple.com` (the scanner above covers your own code) — scripts, scheduled jobs, BI connectors, vendors. Ask vendors for their cut-over date in writing.
 2. Port the reads first and run them next to v5 against the same account. Compare spend, installs and the campaign list day by day; a difference of zero for two weeks is the bar we used.
 3. Do not create a second connection that also writes or imports spend. Two connectors on one account double-count spend.
 4. Switch writes one account at a time, starting with reversible ones: a budget change you can set back, a pause you can resume.
@@ -89,4 +108,4 @@ Seen something different on your account? Open an issue with the endpoint, what 
 
 ---
 
-Text licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Not affiliated with Apple. Apple Ads is a trademark of Apple Inc.
+Text licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). `scan.mjs` is MIT. Not affiliated with Apple. Apple Ads is a trademark of Apple Inc.
